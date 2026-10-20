@@ -8,7 +8,7 @@ The plugin ships no binary, downloads nothing, and updates nothing. You install 
 
 | Piece | Detail |
 | --- | --- |
-| Settings page | **Settings → OfficeCLI**: binary path, runtime (auto / Windows native / WSL), optional WSL distribution, a skill toggle, and a Test button that reports the detected version. |
+| Settings page | **Settings → OfficeCLI**: binary path, a skill toggle, and a Test button that reports the detected version. |
 | `officecli` tool | One tool, parameter `command` (a command line or pre-split argv). The process starts in the **session working directory**, so relative paths behave like a shell. |
 | Skills | OfficeCLI's ten bundled skills (`pptx`, `word`, `excel`, `word-form`, `morph-ppt`, `morph-ppt-3d`, `pitch-deck`, `academic-paper`, `data-dashboard`, `financial-model`) are exposed as runtime skills named `officecli-<slug>`. |
 
@@ -29,18 +29,19 @@ Or install the bundle through the Harness plugin manager UI and enable it.
 
 ## Configure
 
-1. Install OfficeCLI (see upstream; e.g. `curl -fsSL https://d.officecli.ai/install.sh | sh` inside WSL, or the Windows release asset).
+1. Install the OfficeCLI build for the platform **this harness runs on** (see upstream releases): `officecli-win-x64.exe` on Windows, `officecli-linux-x64` on Linux, `officecli-mac-arm64` on Apple silicon.
 2. Open **Settings → OfficeCLI**.
-3. Fill in the binary path:
-   - Windows native: `C:\Users\you\.local\bin\officecli.exe`
-   - WSL: `/home/you/.local/bin/officecli` (runtime `auto` detects this shape, or pick `WSL`)
+3. Fill in the binary path, e.g. `C:\Users\you\officecli\officecli.exe`.
 4. **Test**, then **Save**.
 
 Settings live in `$DSH_HOME/officecli-connection/settings.json`.
 
+## One platform, one build
+
+The plugin spawns the configured binary **directly** — no `wsl.exe` bridge, no `/mnt/c/` path translation, no distribution selector. A Windows harness runs the Windows build; a harness running inside WSL or on Linux runs the Linux build. Pointing a Windows harness at a Linux path is rejected with an explicit message instead of a bare `ENOENT`.
+
 ## Runtime notes
 
-- **WSL**: Windows-style absolute arguments (`C:\work\deck.pptx`) are translated to `/mnt/c/work/deck.pptx` before the call; the working directory is translated by `wsl.exe` itself.
 - **Resident processes**: each tool call is one short-lived process, so chain edits with `batch` rather than relying on `open`/`set`/`close` across calls.
 - **Rendering**: `view ... screenshot|html|pdf` needs a rendering backend and the document's fonts. The core commands (`get`, `set`, `add`, `remove`, `query`, `batch`, `validate`, `dump`, `merge`, `view text|outline|stats|issues`) do not. The tool description tells the model which is which; the plugin does not try to install fonts or browsers.
 
