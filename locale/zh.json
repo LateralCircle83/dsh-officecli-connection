@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "title": "OfficeCLI",
+    "description": "接入本机自行安装的 OfficeCLI：设置页填写二进制路径，提供在会话目录内运行的 officecli 工具，并把 OfficeCLI 内置技能作为运行时技能注入。"
+  },
+  "settings": {
+    "title": "OfficeCLI",
+    "subtitle": "把你自行安装的 OfficeCLI 二进制接到 DeepSeek Harness。"
+  }
+}

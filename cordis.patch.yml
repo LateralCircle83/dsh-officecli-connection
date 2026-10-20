@@ -1,0 +1,8 @@
+# dsh-officecli-connection bundle patch
+#
+# Inserts one Host plugin row. The OfficeCLI binary itself is never shipped or
+# downloaded by this bundle: the user installs it, then fills its path in
+# Settings -> OfficeCLI.
+- insert:
+    - id: officecli-connection
+      name: dsh-officecli-connection

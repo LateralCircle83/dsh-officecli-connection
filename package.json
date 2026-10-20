@@ -1,0 +1,47 @@
+{
+  "name": "dsh-officecli-connection",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Attach a locally installed OfficeCLI binary to DeepSeek Harness: one settings page for the binary path, an officecli tool that runs in the session directory, and OfficeCLI's bundled skills injected without touching any workspace.",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": []
+    }
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "officecli",
+    "office",
+    "pptx",
+    "docx",
+    "xlsx"
+  ]
+}

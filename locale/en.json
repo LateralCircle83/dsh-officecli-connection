@@ -1,0 +1,10 @@
+{
+  "meta": {
+    "title": "OfficeCLI",
+    "description": "Connect a locally installed OfficeCLI binary: a settings page for its path, an officecli tool that runs inside the session directory, and OfficeCLI's bundled skills injected as runtime skills."
+  },
+  "settings": {
+    "title": "OfficeCLI",
+    "subtitle": "Point DeepSeek Harness at an OfficeCLI binary you installed yourself."
+  }
+}
