@@ -20,11 +20,47 @@ Skills are injected through the Harness skill-provider contract, so **no file is
 | --- | --- |
 | stdout | passed through verbatim as the text block, truncated at 8 MB |
 | stderr | appended to that text; never parsed, never dropped |
-| exit code | passed through unchanged; no retry, no reinterpretation |
+| exit code | passed through unchanged; no retry, no reinterpretation. `2` means "ran with caveats": read `warnings`, `success` can be false |
 | a line naming an existing image file | committed as a durable attachment and returned as an image block; over a deployment size limit you get the path plus a note |
 | everything else | untouched — no JSON parsing, no HTML rendering, no file watching |
 
-The tool description deliberately carries **no flag reference**. It tells the model to run `officecli help`, `help <verb>` and `help <format> <element>`, because the binary is the authoritative schema and any hardcoded flag list drifts with the version.
+The tool description deliberately carries **no flag reference**. It tells the model to run `officecli help`, `help <verb>` and `help <format> <element>`, because the binary is the authoritative schema and any hardcoded flag list drifts with the version. What it does carry is the short list of traps below — the ones that cost a real document build.
+
+## Known upstream behaviour
+
+Reproduced against OfficeCLI 1.0.158. None of this is the plugin's own design; the tool description repeats it so the model does not rediscover it on every document.
+
+| Behaviour | What to do |
+| --- | --- |
+| The binary runs **argv, not a shell** | no `&&`, `\|`, `>`, `$VAR`; one command per call, or put the steps in `batch` |
+| Lengths carry units | `1.45cm`, `10.6cm,6.4cm`, `12pt`; a bare number exits 1 |
+| Fonts are per script | set `font.latin` **and** `font.ea`; a lone `font` leaves CJK on a monospace fallback |
+| Table defaults are close to unusable | `border.all=none` plus `border.horizontal`, and an explicit header fill, or the header text is invisible |
+| Write verbs keep a resident process | another reader meanwhile gets "being used by another process"; run `close <file>` when done |
+| xlsx screenshots are an HTML approximation | charts and merged cells can overlap or clip while the workbook is correct; confirm with `view text --range` and `view issues` |
+| `view issues` has a false positive | a horizontal `INDEX(..., MATCH(...))` can be reported as `#REF!` while the cached value is right |
+
+## Coexisting with the built-in office skills
+
+The desktop profile also ships `@deepseek-ai/dsh-skill-office`, seven skills (`office`, `office-docx`, `office-xlsx`, `office-pptx`, `office-render`, `office-export-pdf`, `office-recalculate`) that render and export through **LibreOffice Kit**. This plugin's `officecli-*` skills are a second, independent path. Both stay in the catalog; neither wins outright, which can look like the two are arguing.
+
+If you would rather keep only one, disable the built-in row in the profile's `cordis.patch.yml`:
+
+```yaml
+# ~/.dsh/profiles/desktop/cordis.patch.yml
+- id: skill-office
+  name: '@deepseek-ai/dsh-skill-office'
+  disabled: true
+```
+
+Trade-offs:
+
+| Keep | You get | You lose |
+| --- | --- | --- |
+| both (default) | model picks per task; LibreOffice path for PDF/export, OfficeCLI path for structural edits | two vocabularies in the catalog, occasional mixed answers |
+| only OfficeCLI | one tool, one skill family, no LibreOffice Kit dependency | `office-render` / `office-export-pdf` / `office-recalculate` (a separate `office-to-pdf` tool also disappears with this plugin) |
+| only built-in | survives an OfficeCLI move or upgrade | no `merge`, `batch`, `issues`, `dump`, `query` — the parts of OfficeCLI the built-in skills do not model |
+
 
 ## Why not MCP
 
@@ -54,7 +90,7 @@ The plugin spawns the configured binary **directly** — no `wsl.exe` bridge, no
 
 ## Runtime notes
 
-- **Resident processes**: each tool call is one short-lived process, so chain edits with `batch` rather than relying on `open`/`set`/`close` across calls.
+- **Resident processes**: each tool call is one short-lived process; the binary may keep the file open in a background resident, which blocks other processes from reading it. Either chain edits with `batch` or finish with `close <file>`.
 - **Rendering**: `view ... screenshot|html|pdf` needs a rendering backend and the document's fonts. The core commands (`get`, `set`, `add`, `remove`, `query`, `batch`, `validate`, `dump`, `merge`, `view text|outline|stats|issues`) do not. The tool description tells the model which is which; the plugin does not try to install fonts or browsers.
 - **Screenshots travel with the result**: when a command prints the path of an image it just wrote, the plugin commits that file as a durable attachment and returns it as an image block. The printed path stays in the text block, so a model that cannot receive images — or a deployment with a tighter size limit — still gets an actionable fallback (`read_image`), and an over-limit or failed attachment is reported as a note instead of an error.
 
