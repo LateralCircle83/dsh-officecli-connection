@@ -14,6 +14,8 @@ The plugin ships no binary, downloads nothing, and updates nothing. You install 
 
 Skills are injected through the Harness skill-provider contract, so **no file is ever written anywhere**: no workspace, no `.agents/`, no `~/.claude`. The catalog comes from `officecli load_skill` and a body from `officecli load_skill <slug>`, both of which print to stdout. Bundled reference files stay loadable through the skill's `resourceBase`, which tells the agent to run `officecli load_skill <slug> --path <relpath>`.
 
+With the skill toggle **off**, `officecli` and all ten guides leave the catalog together — the model then works from `help` and the tool description alone. Files stay valid; what goes missing is the house style (layout floors, palettes, element canon, per-format verification), so a deliverable comes out plainer rather than broken. The settings page says exactly this when the box is unchecked, and the tool description tells the model to admit it rather than invent a guide that is not there.
+
 ## Boundary: what happens to output
 
 | Channel | Treatment |
