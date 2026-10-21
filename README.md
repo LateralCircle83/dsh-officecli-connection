@@ -44,6 +44,13 @@ Reproduced against OfficeCLI 1.0.158. None of this is the plugin's own design; t
 | Write verbs keep a resident process | another reader meanwhile gets "being used by another process"; run `close <file>` when done |
 | `validate` checks the package, not the layout | a table can overflow the slide and still pass; only a screenshot shows it — text that overflows a box is clipped or wrapped out of sight, at any font size |
 | xlsx screenshots are an HTML approximation | charts and merged cells can overlap or clip while the workbook is correct; confirm with `view text --range` and `view issues` |
+| A formula condition with quotes | write `\">1\"` (or pass the argv array): the plain string form strips the quotes, the cell keeps `#OCLI_NOTEVAL!`, and the call still reports success |
+| A formula written across a range | relative references are not shifted — `set /Sheet1!D1:D3 --prop formula=A1*2` stores `A1*2` three times; one op per cell |
+| Changing a precedent deletes its cached value | `view issues` answers "can this be evaluated", not "what is cached"; `<x:calcPr fullCalcOnLoad="1"/>` makes Excel recompute on open |
+| `colWidths` is fixed at table creation | it cannot be changed afterwards, and `add` only appends to the end of the body — estimate widths and build the document as one batch |
+| `create` leaves the style part empty | set `Normal`/`Heading` fonts in the first batch, or CJK silently falls back to `等线`; only `view stats`' Font Usage shows it |
+| `view text` does not expand table cells | it prints `[Table: 9 rows]`; read the content with `get /body/tbl[1]/tr[N]` |
+| A screenshot page past the end | returns page 1 unchanged instead of failing; xlsx screenshots also need a headless browser (docx and pptx do not) |
 | `view issues` has a false positive | a horizontal `INDEX(..., MATCH(...))` can be reported as `#REF!` while the cached value is right |
 
 ## Coexisting with other Office skills
