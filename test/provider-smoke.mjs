@@ -32,7 +32,7 @@ const home = mkdtempSync(path.join(os.tmpdir(), 'officecli-smoke-'));
 mkdirSync(path.join(home, 'officecli-connection'), { recursive: true });
 writeFileSync(
   path.join(home, 'officecli-connection', 'settings.json'),
-  JSON.stringify({ binaryPath, skillsEnabled: true, yieldToBuiltin: true }, null, 2),
+  JSON.stringify({ binaryPath, skillsEnabled: true, hideBuiltin: true }, null, 2),
 );
 process.env.DSH_HOME = home;
 process.resourcesPath = process.env.OFFICECLI_TEST_RESOURCES ?? process.resourcesPath;
@@ -106,8 +106,11 @@ const timed = async (label, promise, ms = 20000) => {
 };
 
 const list = await timed('list()', registry.provider.list({}));
-console.log('catalog size:', list.length, '->', list.map((item) => item.name).join(', '));
-console.log('overlap hidden:', !list.some((item) => ['officecli-pptx', 'officecli-docx', 'officecli-xlsx'].includes(item.name)));
+const guides = list.filter((item) => item.name.startsWith('officecli-'));
+const shadows = list.filter((item) => !item.name.startsWith('officecli-'));
+console.log('guides:', guides.length, '| shadows:', shadows.length);
+console.log('shadow names:', shadows.map((item) => item.name).join(', '));
+console.log('shadows are model-invocable:', shadows.some((item) => item.invocation.modelInvocable));
 
 const loaded = await timed('get()', registry.provider.get({ name: 'officecli-word-form', locator: { slug: 'word-form' } }, {}));
 console.log('get() name:', loaded?.name, 'bytes:', loaded?.content?.length);
@@ -133,16 +136,16 @@ async function call(route, method, body) {
 }
 
 const state = await call('/state', 'GET');
-console.log('/state:', state.status, 'builtin:', state.payload.data.office.builtin.present, 'yield:', state.payload.data.settings.yieldToBuiltin);
+console.log('/state:', state.status, 'hide:', state.payload.data.settings.hideBuiltin);
 
-const off = await call('/yield', 'POST', { yieldToBuiltin: false });
-console.log('/yield off:', off.status, 'stored:', off.payload.data.settings.yieldToBuiltin);
+const off = await call('/yield', 'POST', { hideBuiltin: false });
+console.log('/yield off:', off.status, 'stored:', off.payload.data.settings.hideBuiltin);
 const wide = await timed('list() after off', registry.provider.list({}));
-console.log('catalog after off:', wide.length);
+console.log('entries after off:', wide.length, '(shadows:', wide.length - 10, ')');
 
-const on = await call('/yield', 'POST', { yieldToBuiltin: true });
-console.log('/yield on:', on.status, 'stored:', on.payload.data.settings.yieldToBuiltin);
+const on = await call('/yield', 'POST', { hideBuiltin: true });
+console.log('/yield on:', on.status, 'stored:', on.payload.data.settings.hideBuiltin);
 const narrow = await timed('list() after on', registry.provider.list({}));
-console.log('catalog after on:', narrow.length);
+console.log('entries after on:', narrow.length, '(shadows:', narrow.length - 10, ')');
 
 rmSync(home, { recursive: true, force: true });

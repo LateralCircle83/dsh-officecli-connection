@@ -10,7 +10,7 @@ The plugin ships no binary, downloads nothing, and updates nothing. You install 
 | --- | --- |
 | Settings page | **Settings → OfficeCLI**: binary path, a skill toggle, and a Test button that reports the detected version. |
 | `officecli` tool | One tool, parameter `command` (a command line or pre-split argv). The process starts in the **session working directory**, so relative paths behave like a shell. Rendered pages come back as image attachments. |
-| Skills | OfficeCLI's ten bundled skills (`pptx`, `word`, `excel`, `word-form`, `morph-ppt`, `morph-ppt-3d`, `pitch-deck`, `academic-paper`, `data-dashboard`, `financial-model`) are exposed as runtime skills. Names follow the skill's own id, so `word` surfaces as `officecli-docx` and `excel` as `officecli-xlsx` — the way the other skill bodies cross-reference them. Where the desktop build mounts its own office skills, the three overlapping guides step aside by default (see *Coexisting with the built-in office skills*). |
+| Skills | OfficeCLI's ten bundled skills (`pptx`, `word`, `excel`, `word-form`, `morph-ppt`, `morph-ppt-3d`, `pitch-deck`, `academic-paper`, `data-dashboard`, `financial-model`) are exposed as runtime skills. Names follow the skill's own id, so `word` surfaces as `officecli-docx` and `excel` as `officecli-xlsx` — the way the other skill bodies cross-reference them. The desktop build's own seven office skills are hidden by default so only one stack is in play (see *Hiding the built-in office skills*). |
 
 Skills are injected through the Harness skill-provider contract, so **no file is ever written anywhere**: no workspace, no `.agents/`, no `~/.claude`. The catalog comes from `officecli load_skill` and a body from `officecli load_skill <slug>`, both of which print to stdout. Bundled reference files stay loadable through the skill's `resourceBase`, which tells the agent to run `officecli load_skill <slug> --path <relpath>`.
 
@@ -40,22 +40,24 @@ Reproduced against OfficeCLI 1.0.158. None of this is the plugin's own design; t
 | xlsx screenshots are an HTML approximation | charts and merged cells can overlap or clip while the workbook is correct; confirm with `view text --range` and `view issues` |
 | `view issues` has a false positive | a horizontal `INDEX(..., MATCH(...))` can be reported as `#REF!` while the cached value is right |
 
-## Coexisting with the built-in office skills
+## Hiding the built-in office skills
 
-A desktop build also mounts `@deepseek-ai/dsh-skill-office` — seven skills (`office`, `office-docx`, `office-xlsx`, `office-pptx`, `office-render`, `office-export-pdf`, `office-recalculate`) that render and export through **LibreOffice Kit**.
+A desktop build also mounts `@deepseek-ai/dsh-skill-office` — seven skills (`office`, `office-docx`, `office-xlsx`, `office-pptx`, `office-render`, `office-export-pdf`, `office-recalculate`) that render and export through **LibreOffice Kit** and edit files through the Python libraries.
 
-That stack is mounted by the desktop host from `resources/runtime/office-skills`, *outside* the profile composition. It is therefore not a loader row: it does not appear in `configEditor.entries()`, `plugin_manager` cannot address it, and a `cordis.patch.yml` override for `skill-office` has nothing to attach to. This plugin cannot unload it.
+That stack is mounted by the desktop host from `resources/runtime/office-skills`, *outside* the profile composition. It is therefore not a loader row: it does not appear in `configEditor.entries()`, `plugin_manager` cannot address it, a `cordis.patch.yml` override for `skill-office` has nothing to attach to, and the `skills` service offers no disable call — only `registerProvider`, `register`, `list`, `snapshot` and `get`.
 
-What this plugin can do is step aside, and it does so by default:
+The one lever left is the catalog's own duplicate resolution. With the switch on, this plugin publishes an entry under each of those seven names with `modelInvocable: false`. On the current build the catalog resolves a duplicate name to the **provider that was registered last**, so those entries replace the built-in ones and the built-in guides stop reaching the model entirely.
 
-| Setting | Catalog | When to pick it |
+| Switch | Model sees | When to pick it |
 | --- | --- | --- |
-| **Yield on** (default) | this plugin publishes 7 skills: `morph-ppt`, `morph-ppt-3d`, `pitch-deck`, `academic-paper`, `data-dashboard`, `financial-model`, `word-form`; the built-in `office-docx/pptx/xlsx` own those three formats | one manual per format; the built-in guides are excellent for structure, and `office-render`/`office-export-pdf` stay available |
-| **Yield off** | this plugin publishes all 10, including `officecli-pptx`, `officecli-docx`, `officecli-xlsx` | you want the OfficeCLI vocabulary for `.pptx` too — at the cost of two guides per format |
+| **Hide on** (default) | only this plugin's 10 skills; all seven `office-*` names resolve to non-invocable shadows | one stack, no duplicate guides, no ambiguity about which manual to follow |
+| **Hide off** | 7 built-in + 10 from this plugin | you want the LibreOffice route back without uninstalling anything |
 
-The toggle lives in **Settings → OfficeCLI → Yield to the built-in office-* skills** and applies immediately: no restart, because the provider's cache is invalidated and the catalog is rebuilt in place.
+Both directions are verified against a live desktop profile: `hide off` → seven visible, `hide on` → zero visible, and the catalog rebuilds in place with no restart.
 
-Detection is a synchronous directory check (`<resources>/runtime/office-skills`) rather than a lookup in the skills service — a provider that awaits `skills.snapshot()` from inside `list()` deadlocks the catalog, and with it the whole session.
+The toggle lives in **Settings → OfficeCLI → Hide the built-in office-* skills**, and the settings page reports which way resolution went (`Built-in guides are hidden` versus `still visible`). That readout exists because this is an empirical bet on the resolver's tie-breaking: if a future build registers providers in a different order or rejects duplicate names, the switch degrades to a no-op and says so instead of silently doing nothing.
+
+Detection of "is the built-in stack installed" is a synchronous directory check (`<resources>/runtime/office-skills`) rather than a lookup in the skills service — a provider that awaits `skills.snapshot()` from inside `list()` deadlocks the catalog, and with it the whole session.
 
 
 ## Why not MCP

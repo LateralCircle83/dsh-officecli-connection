@@ -1,6 +1,6 @@
 {
   "name": "dsh-officecli-connection",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "Attach a locally installed OfficeCLI binary to DeepSeek Harness: one settings page for the binary path, an officecli tool that runs in the session directory, and OfficeCLI's bundled skills injected without touching any workspace.",
   "license": "MIT",
