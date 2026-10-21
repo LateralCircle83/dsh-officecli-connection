@@ -32,7 +32,7 @@ const home = mkdtempSync(path.join(os.tmpdir(), 'officecli-smoke-'));
 mkdirSync(path.join(home, 'officecli-connection'), { recursive: true });
 writeFileSync(
   path.join(home, 'officecli-connection', 'settings.json'),
-  JSON.stringify({ binaryPath, skillsEnabled: true, hideBuiltin: true }, null, 2),
+  JSON.stringify({ binaryPath, skillsEnabled: true }, null, 2),
 );
 process.env.DSH_HOME = home;
 process.resourcesPath = process.env.OFFICECLI_TEST_RESOURCES ?? process.resourcesPath;
@@ -106,11 +106,13 @@ const timed = async (label, promise, ms = 20000) => {
 };
 
 const list = await timed('list()', registry.provider.list({}));
+const entry = list.find((item) => item.name === 'officecli');
 const guides = list.filter((item) => item.name.startsWith('officecli-'));
-const shadows = list.filter((item) => !item.name.startsWith('officecli-'));
-console.log('guides:', guides.length, '| shadows:', shadows.length);
-console.log('shadow names:', shadows.map((item) => item.name).join(', '));
-console.log('shadows are model-invocable:', shadows.some((item) => item.invocation.modelInvocable));
+console.log('entries:', list.length, '| guides:', guides.length, '| workflow entry:', Boolean(entry));
+console.log('catalog order:', list.map((item) => item.name).join(', '));
+
+const workflow = await registry.provider.get(entry, {});
+console.log('workflow body bytes:', workflow?.content?.length, '| starts:', workflow?.content?.slice(0, 40).replace(/\n/g, ' '));
 
 const loaded = await timed('get()', registry.provider.get({ name: 'officecli-word-form', locator: { slug: 'word-form' } }, {}));
 console.log('get() name:', loaded?.name, 'bytes:', loaded?.content?.length);
@@ -136,16 +138,9 @@ async function call(route, method, body) {
 }
 
 const state = await call('/state', 'GET');
-console.log('/state:', state.status, 'hide:', state.payload.data.settings.hideBuiltin);
+console.log('/state:', state.status, '| workflow entry:', state.payload.data.workflow?.name, '| skills listed:', state.payload.data.skills.length);
 
-const off = await call('/yield', 'POST', { hideBuiltin: false });
-console.log('/yield off:', off.status, 'stored:', off.payload.data.settings.hideBuiltin);
-const wide = await timed('list() after off', registry.provider.list({}));
-console.log('entries after off:', wide.length, '(shadows:', wide.length - 10, ')');
-
-const on = await call('/yield', 'POST', { hideBuiltin: true });
-console.log('/yield on:', on.status, 'stored:', on.payload.data.settings.hideBuiltin);
-const narrow = await timed('list() after on', registry.provider.list({}));
-console.log('entries after on:', narrow.length, '(shadows:', narrow.length - 10, ')');
+const saved = await call('/save', 'POST', { binaryPath, skillsEnabled: true });
+console.log('/save:', saved.status, '| re-probed:', saved.payload.data.status.version);
 
 rmSync(home, { recursive: true, force: true });
