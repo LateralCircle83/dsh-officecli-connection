@@ -1,22 +1,53 @@
-// Reentrancy probe: the skills service collects every provider's list(), so a
-// provider that awaits the service from inside list() deadlocks. This harness
-// simulates exactly that shape and fails if list() does not return.
+// Two regressions this file guards against:
+//
+// 1. Reentrancy — the skills service collects every provider's list(), so a
+//    provider that awaits the service from inside list() deadlocks the catalog
+//    and hangs the session. The snapshot() mock below has that exact shape.
+// 2. Route order — a POST branch that reads `body` before it is parsed dies
+//    with a TDZ error only at runtime, when a user clicks the switch. The
+//    route tests at the bottom exercise the real handler.
 import { spawn } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { Readable } from 'node:stream';
 import { apply } from '../lib/index.js';
 
+const liveSettings = path.join(os.homedir(), '.dsh', 'officecli-connection', 'settings.json');
+const binaryPath = (() => {
+  if (process.env.OFFICECLI_TEST_BINARY) return process.env.OFFICECLI_TEST_BINARY;
+  try {
+    return JSON.parse(readFileSync(liveSettings, 'utf8')).binaryPath;
+  } catch {
+    return '';
+  }
+})();
+if (!binaryPath) {
+  console.error('set OFFICECLI_TEST_BINARY, or configure the plugin once so a path can be borrowed');
+  process.exit(2);
+}
+
+// Isolated state dir: the tests flip the toggle, and the live profile must not move.
+const home = mkdtempSync(path.join(os.tmpdir(), 'officecli-smoke-'));
+mkdirSync(path.join(home, 'officecli-connection'), { recursive: true });
+writeFileSync(
+  path.join(home, 'officecli-connection', 'settings.json'),
+  JSON.stringify({ binaryPath, skillsEnabled: true, yieldToBuiltin: true }, null, 2),
+);
+process.env.DSH_HOME = home;
+process.resourcesPath = process.env.OFFICECLI_TEST_RESOURCES ?? process.resourcesPath;
+
 const registry = {};
+const routes = {};
+
 const subprocess = {
   spawn(spec) {
     const child = spawn(spec.argv[0], spec.argv.slice(1), { cwd: spec.cwd, windowsHide: true });
     const chunks = [];
     child.stdout.on('data', (chunk) => chunks.push(chunk));
-    let stderr = '';
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
     const done = new Promise((resolve) => {
       child.on('close', (code) => resolve({ exitCode: code ?? 0, signal: null }));
-      child.on('error', (error) => resolve({ exitCode: 1, signal: null, error }));
+      child.on('error', () => resolve({ exitCode: 1, signal: null }));
     });
     return {
       done,
@@ -27,7 +58,6 @@ const subprocess = {
           },
         },
       },
-      stderr: () => stderr,
       kill() {
         child.kill();
       },
@@ -49,22 +79,28 @@ const ctx = {
       registry.provider = create({ signal: new AbortController().signal, invalidate() {} });
       return () => {};
     },
-    // Mirrors the real service: collecting the catalog awaits each provider.
     async snapshot() {
       return registry.provider.list({});
     },
   },
-  webServer: { register: () => () => {} },
+  webServer: {
+    register({ path: prefix, handler }) {
+      routes[prefix] = handler;
+      return () => {};
+    },
+  },
   workingDirectory: { ensure: async () => process.cwd() },
   subprocess,
 };
 
-process.resourcesPath = process.env.OFFICECLI_TEST_RESOURCES ?? process.resourcesPath; // what the desktop shell exposes
 apply(ctx);
 
 const timed = async (label, promise, ms = 20000) => {
   const started = Date.now();
-  const result = await Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms))]);
+  const result = await Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)),
+  ]);
   console.log(`${label}: ok in ${Date.now() - started}ms`);
   return result;
 };
@@ -76,3 +112,37 @@ console.log('overlap hidden:', !list.some((item) => ['officecli-pptx', 'officecl
 const loaded = await timed('get()', registry.provider.get({ name: 'officecli-word-form', locator: { slug: 'word-form' } }, {}));
 console.log('get() name:', loaded?.name, 'bytes:', loaded?.content?.length);
 
+// ---------------------------------------------------------------- routes --
+
+async function call(route, method, body) {
+  const handler = Object.values(routes)[0];
+  const req = Readable.from(body === undefined ? [] : [Buffer.from(JSON.stringify(body))]);
+  req.method = method;
+  req.url = '/api/dsh-officecli' + route;
+  req.headers = { host: '127.0.0.1:59999', origin: 'http://127.0.0.1:59999', 'content-type': 'application/json' };
+  const res = {
+    writeHead(code) {
+      this.statusCode = code;
+    },
+    end(chunk) {
+      this.payload = JSON.parse(Buffer.from(chunk).toString('utf8'));
+    },
+  };
+  await handler(req, res);
+  return { status: res.statusCode, payload: res.payload };
+}
+
+const state = await call('/state', 'GET');
+console.log('/state:', state.status, 'builtin:', state.payload.data.office.builtin.present, 'yield:', state.payload.data.settings.yieldToBuiltin);
+
+const off = await call('/yield', 'POST', { yieldToBuiltin: false });
+console.log('/yield off:', off.status, 'stored:', off.payload.data.settings.yieldToBuiltin);
+const wide = await timed('list() after off', registry.provider.list({}));
+console.log('catalog after off:', wide.length);
+
+const on = await call('/yield', 'POST', { yieldToBuiltin: true });
+console.log('/yield on:', on.status, 'stored:', on.payload.data.settings.yieldToBuiltin);
+const narrow = await timed('list() after on', registry.provider.list({}));
+console.log('catalog after on:', narrow.length);
+
+rmSync(home, { recursive: true, force: true });
