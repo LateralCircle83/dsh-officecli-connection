@@ -58,7 +58,7 @@ Trade-offs:
 | Keep | You get | You lose |
 | --- | --- | --- |
 | both (default) | model picks per task; LibreOffice path for PDF/export, OfficeCLI path for structural edits | two vocabularies in the catalog, occasional mixed answers |
-| only OfficeCLI | one tool, one skill family, no LibreOffice Kit dependency | `office-render` / `office-export-pdf` / `office-recalculate` (a separate `office-to-pdf` tool also disappears with this plugin) |
+| only OfficeCLI | one tool, one skill family, one vocabulary | `office-render`, `office-export-pdf`, `office-recalculate` — i.e. converting through LibreOffice. The separate `office-to-pdf` tool is its own loader row and is unaffected |
 | only built-in | survives an OfficeCLI move or upgrade | no `merge`, `batch`, `issues`, `dump`, `query` — the parts of OfficeCLI the built-in skills do not model |
 
 
