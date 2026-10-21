@@ -50,7 +50,7 @@ Reproduced against OfficeCLI 1.0.158. None of this is the plugin's own design; t
 | `colWidths` is fixed at table creation | it cannot be changed afterwards, and `add` only appends to the end of the body — estimate widths and build the document as one batch |
 | `create` leaves the style part empty | set `Normal`/`Heading` fonts in the first batch, or CJK silently falls back to `等线`; only `view stats`' Font Usage shows it |
 | `view text` does not expand table cells | it prints `[Table: 9 rows]`; read the content with `get /body/tbl[1]/tr[N]` |
-| A screenshot page past the end | returns page 1 unchanged instead of failing; an xlsx screenshot also needs a headless browser (docx and pptx do not), and a browser that exists but cannot start stalls the call for up to two minutes |
+| A screenshot page past the end | returns page 1 unchanged instead of failing; an xlsx screenshot also needs a browser (docx and pptx render inside the binary), and whether one is available depends on the machine |
 | `view issues` has a false positive | a horizontal `INDEX(..., MATCH(...))` can be reported as `#REF!` while the cached value is right |
 
 ## Coexisting with other Office skills
