@@ -27,12 +27,12 @@ if (!binaryPath) {
   process.exit(2);
 }
 
-// Isolated state dir: the tests flip the toggle, and the live profile must not move.
+// Isolated state dir: the live profile must not move.
 const home = mkdtempSync(path.join(os.tmpdir(), 'officecli-smoke-'));
 mkdirSync(path.join(home, 'officecli-connection'), { recursive: true });
 writeFileSync(
   path.join(home, 'officecli-connection', 'settings.json'),
-  JSON.stringify({ binaryPath, skillsEnabled: true }, null, 2),
+  JSON.stringify({ binaryPath }, null, 2),
 );
 process.env.DSH_HOME = home;
 process.resourcesPath = process.env.OFFICECLI_TEST_RESOURCES ?? process.resourcesPath;
@@ -152,7 +152,7 @@ async function call(route, method, body) {
 const state = await call('/state', 'GET');
 console.log('/state:', state.status, '| workflow entry:', state.payload.data.workflow?.name, '| skills listed:', state.payload.data.skills.length);
 
-const saved = await call('/save', 'POST', { binaryPath, skillsEnabled: true });
+const saved = await call('/save', 'POST', { binaryPath });
 console.log('/save:', saved.status, '| re-probed:', saved.payload.data.status.version);
 
 rmSync(home, { recursive: true, force: true });

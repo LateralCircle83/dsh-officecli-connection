@@ -8,13 +8,13 @@ The plugin ships no binary, downloads nothing, and updates nothing. You install 
 
 | Piece | Detail |
 | --- | --- |
-| Settings page | **Settings → OfficeCLI**: binary path, a skill toggle, and a Test button that reports the detected version. |
+| Settings page | **Settings → OfficeCLI**: the binary path, and a Test button that reports the detected version and how many guides are mounted. There is no "inject skills" switch: the guides *are* the workflow, so a tool without them would be an executor with no manual. Clearing the path is the way to switch Office off. |
 | `officecli` tool | One tool, parameter `command` (a command line or pre-split argv). The process starts in the **session working directory**, so relative paths behave like a shell. Rendered pages come back as image attachments. |
 | Skills | OfficeCLI's ten bundled guides (`pptx`, `word`, `excel`, `word-form`, `morph-ppt`, `morph-ppt-3d`, `pitch-deck`, `academic-paper`, `data-dashboard`, `financial-model`) are exposed as runtime skills. Names follow the skill's own id, so `word` surfaces as `officecli-docx` and `excel` as `officecli-xlsx` — the way the other skill bodies cross-reference them. One extra entry, `officecli`, is this plugin's own: it maps the ten and states the workflow boundary (see *Coexisting with other Office skills*). |
 
 Skills are injected through the Harness skill-provider contract, so **no file is ever written anywhere**: no workspace, no `.agents/`, no `~/.claude`. The catalog comes from `officecli load_skill` and a body from `officecli load_skill <slug>`, both of which print to stdout. Bundled reference files stay loadable through the skill's `resourceBase`, which tells the agent to run `officecli load_skill <slug> --path <relpath>`.
 
-With the skill toggle **off**, `officecli` and all ten guides leave the catalog together — the model then works from `help` and the tool description alone. Files stay valid; what goes missing is the house style (layout floors, palettes, element canon, per-format verification), so a deliverable comes out plainer rather than broken. The settings page says exactly this when the box is unchecked, and the tool description tells the model to admit it rather than invent a guide that is not there.
+The guides are not optional. They are the workflow: the tool is an executor, and the per-format knowledge — layout floors, palettes, element canon, the silent-failure list — lives in the eleven skill bodies because it is large and only needed while building. A switch that unmounts them would leave the model with an executor and no manual, and every one of those rules would have to move back into the tool description, which is paid for on every request. So the only setting is the path: clear it (or point it somewhere dead) and the guides leave the catalog with it, which is the honest way to say "not now". The settings page reports how many are mounted, and zero means the path is wrong.
 
 ## Boundary: what happens to output
 
@@ -50,7 +50,7 @@ Reproduced against OfficeCLI 1.0.158. None of this is the plugin's own design; t
 | `colWidths` is fixed at table creation | it cannot be changed afterwards, and `add` only appends to the end of the body — estimate widths and build the document as one batch |
 | `create` leaves the style part empty | set `Normal`/`Heading` fonts in the first batch, or CJK silently falls back to `等线`; only `view stats`' Font Usage shows it |
 | `view text` does not expand table cells | it prints `[Table: 9 rows]`; read the content with `get /body/tbl[1]/tr[N]` |
-| A screenshot page past the end | returns page 1 unchanged instead of failing; xlsx screenshots also need a headless browser (docx and pptx do not) |
+| A screenshot page past the end | returns page 1 unchanged instead of failing; an xlsx screenshot also needs a headless browser (docx and pptx do not), and a browser that exists but cannot start stalls the call for up to two minutes |
 | `view issues` has a false positive | a horizontal `INDEX(..., MATCH(...))` can be reported as `#REF!` while the cached value is right |
 
 ## Coexisting with other Office skills
