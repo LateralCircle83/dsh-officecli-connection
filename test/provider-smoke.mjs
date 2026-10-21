@@ -117,6 +117,18 @@ console.log('workflow body bytes:', workflow?.content?.length, '| starts:', work
 const loaded = await timed('get()', registry.provider.get({ name: 'officecli-word-form', locator: { slug: 'word-form' } }, {}));
 console.log('get() name:', loaded?.name, 'bytes:', loaded?.content?.length);
 
+// A model that serialises argv into `command` must not have it split on spaces.
+const serialised = '["--version"]';
+const versionRun = await timed('tool(serialised array)', registry.tool.execute(
+  { command: serialised },
+  { agent: {}, signal: new AbortController().signal },
+));
+const versionText = registry.tool.output.render({ command: serialised }, versionRun)[0].text.trim();
+console.log('serialised array command ->', versionText);
+if (!/^\d+\.\d+\.\d+/.test(versionText)) {
+  throw new Error(`serialised argv was not parsed back: ${versionText}`);
+}
+
 // ---------------------------------------------------------------- routes --
 
 async function call(route, method, body) {

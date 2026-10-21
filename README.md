@@ -35,10 +35,14 @@ Reproduced against OfficeCLI 1.0.158. None of this is the plugin's own design; t
 | Behaviour | What to do |
 | --- | --- |
 | The binary runs **argv, not a shell** | no `&&`, `\|`, `>`, `$VAR`; one command per call, or put the steps in `batch` |
-| Lengths carry units | `1.45cm`, `10.6cm,6.4cm`, `12pt`; a bare number exits 1 |
+| Long or non-ASCII arguments belong in a file | `batch <file> --input <json>`; inline quoting breaks eventually and silently — a serialised argv array reaches the CLI as the literal token `[batch,` |
+| A bare length is EMU, not an error | `margin=26` collapses the box while `validate` still passes; write `pt`/`cm`. `spacing` is the opposite: unitless points |
+| `add` and `set` disagree on property names | `add` takes `w`/`h`, `set` takes `width`/`height`; a wrong name only prints `UNSUPPORTED props`, and the call still exits 0 |
+| `batch` rolls back on failure | one bad item discards the others, yet the summary line still counts them as succeeded |
 | Fonts are per script | set `font.latin` **and** `font.ea`; a lone `font` leaves CJK on a monospace fallback |
 | Table defaults are close to unusable | `border.all=none` plus `border.horizontal`, and an explicit header fill, or the header text is invisible |
 | Write verbs keep a resident process | another reader meanwhile gets "being used by another process"; run `close <file>` when done |
+| `validate` checks the package, not the layout | a table can overflow the slide and still pass; only a screenshot shows it — text that overflows a box is clipped or wrapped out of sight, at any font size |
 | xlsx screenshots are an HTML approximation | charts and merged cells can overlap or clip while the workbook is correct; confirm with `view text --range` and `view issues` |
 | `view issues` has a false positive | a horizontal `INDEX(..., MATCH(...))` can be reported as `#REF!` while the cached value is right |
 
