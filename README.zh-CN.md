@@ -12,7 +12,7 @@
 | --- | --- |
 | 设置页 | **设置 → OfficeCLI**：填二进制路径，点「测试」会回报检测到的版本和已挂载的指南数量。这里没有「注入技能」开关：指南就是工作流本身，一个没有手册的执行器没有意义。想关掉 OfficeCLI，把路径清空即可。 |
 | `officecli` 工具 | 只有一个工具，参数是 `command`（命令行字符串或已拆好的 argv 数组）。进程在**会话工作目录**里启动，所以相对路径和 shell 里的行为一致。渲染出来的页面会作为图片附件返回。 |
-| 技能 | OfficeCLI 自带的十本指南（`pptx`、`word`、`excel`、`word-form`、`morph-ppt`、`morph-ppt-3d`、`pitch-deck`、`academic-paper`、`data-dashboard`、`financial-model`）以运行时技能的形式暴露。名字跟随技能自身的 id，所以 `word` 显示为 `officecli-docx`、`excel` 显示为 `officecli-xlsx`——其它技能正文正是按这个 id 互相引用的。额外一本 `officecli` 是本插件自己的：它给出十本的映射和工作流边界（见「与其它 Office 技能共存」）。 |
+| 技能 | OfficeCLI 自带的十本指南（`pptx`、`word`、`excel`、`word-form`、`morph-ppt`、`morph-ppt-3d`、`pitch-deck`、`academic-paper`、`data-dashboard`、`financial-model`）以运行时技能的形式暴露。名字跟随技能自身的 id，所以 `word` 显示为 `officecli-docx`、`excel` 显示为 `officecli-xlsx`——其它技能正文正是按这个 id 互相引用的。额外一本 `officecli-workflow` 是本插件自己的：它给出十本的映射、引擎边界和陷阱清单（见「与其它 Office 技能共存」）。它刻意**不**叫 `officecli`，因为二进制会自己装一份同名手册——见下文「第二本 officecli 技能」。 |
 
 技能走 Harness 的技能提供者契约注入，所以**任何位置都不会落盘**：不写工作区、不写 `.agents/`、不写 `~/.claude`。目录来自 `officecli load_skill`，单本正文来自 `officecli load_skill <slug>`，两者都只打印到 stdout。捆绑的参考文件通过技能的 `resourceBase` 保持可读，它会告诉模型去跑 `officecli load_skill <slug> --path <relpath>`。
 
@@ -66,12 +66,20 @@
 | 部分 | 它说了什么 |
 | --- | --- |
 | 技能名 | `officecli-*`——在目录中可以被机械地区分出来 |
-| 技能 `officecli` | 工作流入口：哪本管哪种格式、所有指南都驱动这个工具、别家的技能是另一套引擎，以及为什么一份文件不能一个引擎开头、另一个引擎收尾 |
+| 技能 `officecli-workflow` | 工作流入口：哪本管哪种格式、所有指南都驱动这个工具、别家的技能是另一套引擎，以及为什么一份文件不能一个引擎开头、另一个引擎收尾 |
 | 工具描述 | 同样的边界，放在模型选工具之前一定会读的地方 |
 
 设置页用一句话说明这件事，而不是提供一个开关，因为这里没有东西可以被切换。
 
 有一条规则本插件仍然遵守：技能提供者绝不能在 `list()` 里 await 技能服务——`snapshot()` 会收集每个提供者，包括调用者自己，await 它会让目录死锁，并拖垮整个会话。
+## 第二本 officecli 技能
+
+把二进制以无参数方式启动（双击就是），它会跑自己的安装流程：复制自身到 `%LOCALAPPDATA%\OfficeCli`（各平台对应目录），把这个目录追加进用户 `PATH`，并往它检测到的每个 agent 目录写一份名为 `officecli` 的基础手册。1.0.158 起 `dsh` 也在检测列表里，所以 `~/.dsh/skills/officecli/SKILL.md` 会在插件完全没参与的情况下出现。`officecli install` 做的是同一件事，只是更显式。
+
+那份文件是命令参考（L1/L2/L3 操作、raw XML、常驻模式），不是本插件的替代品；它也不知道这里的二进制路径是个设置项——它自带的说明会重装、改写 `PATH`、并把自己重新铺一遍。
+
+正是这个撞名，让本插件自己的条目叫 `officecli-workflow` 而不是 `officecli`：两个同名技能里，目录先解析到哪一个，另一个就被遮住；删掉文件也只撑到二进制下次运行。工作流技能的正文里写明了这点，工具描述也点名指向它，所以即使模型同时加载了厂商那份，也知道该由哪一本说了算。
+
 
 ## 为什么不用 MCP
 
