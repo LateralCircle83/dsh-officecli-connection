@@ -1,6 +1,6 @@
 {
   "name": "dsh-officecli-connection",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "private": false,
   "description": "Point the Harness at your own OfficeCLI binary: one tool, and ten bundled guides injected as skills behind one workflow entry point.",
   "license": "MIT",

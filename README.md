@@ -110,6 +110,19 @@ The plugin spawns the configured binary **directly** — no `wsl.exe` bridge, no
 
 Disable or remove the bundle. The injected skills, tool, and settings page disappear with it. The only file left behind is `$DSH_HOME/officecli-connection/settings.json`, which you can delete; nothing was ever written into a workspace or into another agent's skill directory.
 
+## Compatibility
+
+There is deliberately no `engines.dsh` field: a version gate rejects builds that would have worked. What the plugin needs is checked when it mounts, and only the three services without which it is pointless are hard requirements.
+
+| Piece | Needed? | If missing |
+| --- | --- | --- |
+| `tools`, `subprocess`, `skills` host services | required | the plugin does not mount, and the error names the missing service |
+| `webServer` | optional | the tool and the guides still work; set the path in `settings.json` |
+| `attachments` | optional | rendered pages come back as file paths instead of image attachments |
+| `workingDirectory` | optional | the tool runs in the system temp directory |
+
+Tested against Harness `0.2.1-rc.2` on Windows with OfficeCLI 1.0.148–1.0.158. The same plugin code was then exercised on Linux (WSL, Node 22, OfficeCLI 1.0.148): tool, skills provider, HTTP routes and command splitting all pass there.
+
 ## Testing
 
 ```sh

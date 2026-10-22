@@ -109,6 +109,19 @@ dsh plugin --profile desktop add <path-to-this-directory>
 
 禁用或移除 bundle。注入的技能、工具、设置页会一起消失。唯一留下的是 `$DSH_HOME/officecli-connection/settings.json`，可以手动删掉；没有任何东西被写进工作区，也没有写进别的 agent 的技能目录。
 
+## 兼容性
+
+这里**故意不写 `engines.dsh`**：版本门禁会把"本来能用"的构建挡在门外。插件在挂载时检查自己需要的服务，只有三个离开就没意义的服务是硬要求。
+
+| 依赖 | 必需？ | 缺失时 |
+| --- | --- | --- |
+| `tools`、`subprocess`、`skills` 宿主服务 | 必需 | 插件不挂载，错误信息里点名缺哪一个 |
+| `webServer` | 可选 | 工具和技能仍可用；路径写 `settings.json` |
+| `attachments` | 可选 | 渲染页以文件路径返回，而不是图片附件 |
+| `workingDirectory` | 可选 | 工具在系统临时目录里运行 |
+
+在 Windows 上按 Harness `0.2.1-rc.2` 实测，OfficeCLI 覆盖 1.0.148–1.0.158。同一份代码随后在 Linux（WSL、Node 22、OfficeCLI 1.0.148）上跑过：工具、技能 provider、HTTP 路由、命令分词全部通过。
+
 ## 测试
 
 ```sh
