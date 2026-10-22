@@ -1,6 +1,6 @@
 {
   "name": "dsh-officecli-connection",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "private": false,
   "description": "Point the Harness at your own OfficeCLI binary: one tool, and ten bundled guides injected as skills behind one workflow entry point.",
   "license": "MIT",
@@ -19,6 +19,7 @@
     "icon.svg",
     "cordis.patch.yml",
     "README.md",
+    "README.zh-CN.md",
     "LICENSE"
   ],
   "dsh": {
@@ -43,5 +44,8 @@
     "pptx",
     "docx",
     "xlsx"
-  ]
+  ],
+  "scripts": {
+    "test": "node test/split.test.mjs && node test/provider-smoke.mjs"
+  }
 }

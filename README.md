@@ -1,5 +1,7 @@
 # dsh-officecli-connection
 
+**English** · [中文](README.zh-CN.md)
+
 A thin DeepSeek Harness shell around a **locally installed** [OfficeCLI](https://github.com/iOfficeAI/OfficeCLI) binary.
 
 The plugin ships no binary, downloads nothing, and updates nothing. You install OfficeCLI yourself; the plugin only learns where it is and gives the agent a clean way to call it.
@@ -107,6 +109,15 @@ The plugin spawns the configured binary **directly** — no `wsl.exe` bridge, no
 ## Uninstall
 
 Disable or remove the bundle. The injected skills, tool, and settings page disappear with it. The only file left behind is `$DSH_HOME/officecli-connection/settings.json`, which you can delete; nothing was ever written into a workspace or into another agent's skill directory.
+
+## Testing
+
+```sh
+node test/split.test.mjs        # the command splitter: quotes, escapes, Windows paths
+node test/provider-smoke.mjs    # one real spawn against a fake context: tool, skills, HTTP routes
+```
+
+Neither needs the Harness running. The smoke test reads the binary path from `$DSH_HOME/officecli-connection/settings.json` and skips the spawn checks when it is empty.
 
 ## License
 
