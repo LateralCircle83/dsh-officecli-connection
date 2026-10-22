@@ -1,6 +1,6 @@
 {
   "name": "dsh-officecli-connection",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "private": false,
   "description": "Point the Harness at your own OfficeCLI binary: one tool, and ten bundled guides injected as skills behind one workflow entry point.",
   "license": "MIT",
@@ -29,7 +29,9 @@
     "client": {
       "platform": "web",
       "immediately": true,
-      "inject": []
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ]
     }
   },
   "engines": {
@@ -46,7 +48,7 @@
     "xlsx"
   ],
   "scripts": {
-    "test": "node test/split.test.mjs && node test/resolve.test.mjs && node test/provider-smoke.mjs"
+    "test": "node test/split.test.mjs && node test/resolve.test.mjs && node test/client-smoke.mjs && node test/provider-smoke.mjs"
   },
   "repository": {
     "type": "git",
