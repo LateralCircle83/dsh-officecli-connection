@@ -100,10 +100,10 @@ Or install the bundle through the Harness plugin manager UI and enable it.
 
 1. Install the OfficeCLI build for the platform **this harness runs on** (see upstream releases): `officecli-win-x64.exe` on Windows, `officecli-linux-x64` on Linux, `officecli-mac-arm64` on Apple silicon.
 2. Open **Settings → OfficeCLI**.
-3. Fill in the binary path, e.g. `C:\Users\you\officecli\officecli.exe`.
+3. Fill in the binary path, e.g. `C:\Users\you\officecli\officecli.exe` — or, if `officecli` is already on `PATH` (the official installer puts it there), just write `officecli` and the plugin resolves it the way a shell would. The status line shows what a bare name resolved to.
 4. **Test**, then **Save**.
 
-Settings live in `$DSH_HOME/officecli-connection/settings.json`.
+Settings live in `$DSH_HOME/officecli-connection/settings.json`. The path is looked up on every call, so adding the binary to `PATH` takes effect without restarting the harness.
 
 ## One platform, one build
 

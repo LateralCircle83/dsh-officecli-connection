@@ -100,10 +100,10 @@ dsh plugin --profile desktop add github:LateralCircle83/dsh-officecli-connection
 
 1. 安装**本 harness 所在平台**的 OfficeCLI 构建（见上游 releases）：Windows 用 `officecli-win-x64.exe`，Linux 用 `officecli-linux-x64`，Apple 芯片用 `officecli-mac-arm64`。
 2. 打开 **设置 → OfficeCLI**。
-3. 填入二进制路径，例如 `C:\Users\you\officecli\officecli.exe`。
+3. 填入二进制路径，例如 `C:\Users\you\officecli\officecli.exe`；如果 `officecli` 已经在 `PATH` 上（官方安装方式会把它放进去），直接写 `officecli` 即可，插件会像 shell 一样去 `PATH` 里找。状态行会显示这个短名最终解析到了哪个文件。
 4. 点**测试**，再点**保存**。
 
-配置存放在 `$DSH_HOME/officecli-connection/settings.json`。
+配置存放在 `$DSH_HOME/officecli-connection/settings.json`。每次调用都会重新解析，所以后加进 `PATH` 的二进制不必重启 harness 就能生效。
 
 ## 一个平台，一套构建
 
