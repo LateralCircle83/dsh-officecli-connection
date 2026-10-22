@@ -92,7 +92,7 @@ OfficeCLI 自带的 `officecli mcp` 服务只暴露一个工具，唯一参数�
 dsh plugin --profile desktop add github:LateralCircle83/dsh-officecli-connection
 ```
 
-不想跟 `main` 的话，在末尾加 tag 锁定版本（`…/dsh-officecli-connection#v0.6.0`）。要改代码就 clone 下来、按路径安装（`add <检出目录>`）；注意插件管理器可能保留的是拷贝而不是链接——那样禁用再启用仍然是旧代码，必须重装才生效。
+不想跟 `main` 的话，在末尾加 tag 锁定版本（`…/dsh-officecli-connection#v0.6.3`）。要改代码就 clone 下来、按路径安装（`add <检出目录>`）；注意插件管理器可能保留的是拷贝而不是链接——那样禁用再启用仍然是旧代码，必须重装才生效。
 
 或者通过 Harness 的插件管理界面安装这个 bundle 并启用。
 

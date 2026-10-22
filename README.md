@@ -92,7 +92,7 @@ OfficeCLI's own `officecli mcp` server exposes exactly one tool whose only param
 dsh plugin --profile desktop add github:LateralCircle83/dsh-officecli-connection
 ```
 
-Pin a version by appending the tag (`…/dsh-officecli-connection#v0.6.0`) if you would rather not track `main`. To hack on it, clone the repo and add the checkout by path instead (`add <path-to-the-checkout>`); note that the manager may keep a copy rather than a link, in which case a disable/enable cycle still serves the old files and only a reinstall picks up your edits.
+Pin a version by appending the tag (`…/dsh-officecli-connection#v0.6.3`) if you would rather not track `main`. To hack on it, clone the repo and add the checkout by path instead (`add <path-to-the-checkout>`); note that the manager may keep a copy rather than a link, in which case a disable/enable cycle still serves the old files and only a reinstall picks up your edits.
 
 Or install the bundle through the Harness plugin manager UI and enable it.
 
