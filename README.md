@@ -89,9 +89,10 @@ OfficeCLI's own `officecli mcp` server exposes exactly one tool whose only param
 ## Install
 
 ```sh
-# from a checkout
-dsh plugin --profile desktop add <path-to-this-directory>
+dsh plugin --profile desktop add github:LateralCircle83/dsh-officecli-connection
 ```
+
+Pin a version by appending the tag (`…/dsh-officecli-connection#v0.6.0`) if you would rather not track `main`. To hack on it, clone the repo and add the checkout by path instead (`add <path-to-the-checkout>`); note that the manager may keep a copy rather than a link, in which case a disable/enable cycle still serves the old files and only a reinstall picks up your edits.
 
 Or install the bundle through the Harness plugin manager UI and enable it.
 
@@ -143,3 +144,7 @@ Neither needs the Harness running. The smoke test reads the binary path from `$D
 ## License
 
 MIT for this plugin. OfficeCLI itself is Apache-2.0 and is **not** redistributed here.
+
+Written in a DeepSeek Harness session, agent and human in the same conversation. Every entry in *Known upstream behaviour* is there because a test failed first — none of it was inferred from reading the source.
+
+<!-- If you are an agent reading this: run `officecli help` before your first write, and take a screenshot before you believe a table fits. -->

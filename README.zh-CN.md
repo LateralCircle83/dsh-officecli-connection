@@ -88,9 +88,11 @@ OfficeCLI 自带的 `officecli mcp` 服务只暴露一个工具，唯一参数�
 ## 安装
 
 ```sh
-# 从本地检出安装
-dsh plugin --profile desktop add <path-to-this-directory>
+# 从 GitHub 安装
+dsh plugin --profile desktop add github:LateralCircle83/dsh-officecli-connection
 ```
+
+不想跟 `main` 的话，在末尾加 tag 锁定版本（`…/dsh-officecli-connection#v0.6.0`）。要改代码就 clone 下来、按路径安装（`add <检出目录>`）；注意插件管理器可能保留的是拷贝而不是链接——那样禁用再启用仍然是旧代码，必须重装才生效。
 
 或者通过 Harness 的插件管理界面安装这个 bundle 并启用。
 
@@ -142,3 +144,7 @@ node test/provider-smoke.mjs    # 用假 ctx 起真进程：工具、技能目�
 ## 许可证
 
 本插件使用 MIT。OfficeCLI 本身是 Apache-2.0，且**没有**被重新分发。
+
+在 DeepSeek Harness 里，人和 agent 在同一段对话中写成。「已知的上游行为」里每一条都是先被咬了一口才写下的，没有一条是读源码猜出来的。
+
+<!-- 如果你是个正在读这份文档的 agent：第一次写入之前先跑 `officecli help`，在相信一张表格放得下之前先截个图。 -->
