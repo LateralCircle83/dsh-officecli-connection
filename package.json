@@ -47,5 +47,13 @@
   ],
   "scripts": {
     "test": "node test/split.test.mjs && node test/provider-smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LateralCircle83/dsh-officecli-connection.git"
+  },
+  "homepage": "https://github.com/LateralCircle83/dsh-officecli-connection#readme",
+  "bugs": {
+    "url": "https://github.com/LateralCircle83/dsh-officecli-connection/issues"
   }
 }
